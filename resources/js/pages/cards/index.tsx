@@ -1,9 +1,11 @@
+import { cacheUrls, getAssetUrlsFromDocument } from '@/lib/offline';
 import { buildQrUrl } from '@/lib/qr';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 type MediaInfo = {
     url: string;
@@ -57,6 +59,10 @@ const breadcrumbs = [
 
 export default function CardsIndex({ cards }: CardsPageProps) {
     const { props } = usePage<{ flash?: { status?: string } }>();
+    const [offlineStatus, setOfflineStatus] = useState<
+        'idle' | 'working' | 'done' | 'error'
+    >('idle');
+    const [offlineMessage, setOfflineMessage] = useState<string | null>(null);
 
     const destroy = (card: CardListItem) => {
         if (
@@ -65,6 +71,54 @@ export default function CardsIndex({ cards }: CardsPageProps) {
             )
         ) {
             router.delete(`/cards/${card.id}`);
+        }
+    };
+
+    const handleOfflineDownload = async () => {
+        setOfflineStatus('working');
+        setOfflineMessage(null);
+
+        try {
+            const origin = window.location.origin;
+            const urls = new Set<string>();
+
+            const addUrl = (value?: string | null) => {
+                if (!value) {
+                    return;
+                }
+
+                try {
+                    const url = new URL(value, origin);
+                    if (url.origin === origin) {
+                        urls.add(url.toString());
+                    }
+                } catch (error) {
+                    // ignore invalid URLs
+                }
+            };
+
+            addUrl('/cards');
+            addUrl(window.location.href);
+
+            cards.data.forEach((card) => {
+                addUrl(card.public_url);
+                addUrl(card.media?.url);
+            });
+
+            getAssetUrlsFromDocument().forEach((url) => addUrl(url));
+
+            const result = await cacheUrls(Array.from(urls));
+            setOfflineStatus('done');
+            setOfflineMessage(
+                `Offline cache ready. Cached ${result.cached} item${result.cached === 1 ? '' : 's'}${result.failed ? `, ${result.failed} failed` : ''}.`,
+            );
+        } catch (error) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : 'Offline cache failed. Please try again.';
+            setOfflineStatus('error');
+            setOfflineMessage(message);
         }
     };
 
@@ -83,14 +137,41 @@ export default function CardsIndex({ cards }: CardsPageProps) {
                     </p>
                 </div>
 
-                <Button asChild className="rounded-full bg-[#184370] px-6">
-                    <Link href="/cards/create">New card</Link>
-                </Button>
+                <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleOfflineDownload}
+                        disabled={offlineStatus === 'working'}
+                        className="rounded-full border-slate-200"
+                    >
+                        {offlineStatus === 'working'
+                            ? 'Preparing offline…'
+                            : 'Download for offline'}
+                    </Button>
+                    <Button asChild className="rounded-full bg-[#184370] px-6">
+                        <Link href="/cards/create">New card</Link>
+                    </Button>
+                </div>
             </div>
 
             {props.flash?.status && (
                 <div className="mt-6 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                     {props.flash.status}
+                </div>
+            )}
+
+            {offlineMessage && (
+                <div
+                    className={cn(
+                        'mt-4 rounded-xl px-4 py-3 text-sm',
+                        offlineStatus === 'done' &&
+                            'bg-blue-50 text-blue-700',
+                        offlineStatus === 'error' &&
+                            'bg-rose-50 text-rose-700',
+                    )}
+                >
+                    {offlineMessage}
                 </div>
             )}
 

@@ -9,6 +9,7 @@ use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Writer\SvgWriter;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -129,6 +130,32 @@ class CardController extends Controller
 
         return Inertia::render('cards/public', [
             'card' => $this->serializeCard($card, includeAnswer: true),
+        ]);
+    }
+
+    /**
+     * Provide a public feed of active cards for offline caching.
+     */
+    public function publicFeed(): JsonResponse
+    {
+        $cards = Card::query()
+            ->active()
+            ->latest()
+            ->get()
+            ->map(function (Card $card) {
+                $mediaPath = $card->media_path
+                    ? Storage::disk('public')->url($card->media_path)
+                    : null;
+                $mediaUrl = $mediaPath ? url($mediaPath) : null;
+
+                return [
+                    'public_url' => route('cards.public', ['card' => $card->uuid]),
+                    'media_url' => $mediaUrl,
+                ];
+            });
+
+        return response()->json([
+            'cards' => $cards,
         ]);
     }
 
