@@ -108,7 +108,7 @@ export default function PublicCard({ card }: PublicCardProps) {
                             <h1 className="text-2xl font-semibold leading-tight text-white sm:text-3xl">
                                 {card.question}
                             </h1>
-
+{/* 
                             <div className="space-y-4 rounded-3xl border border-white/20 bg-white/5 p-5 sm:p-6">
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
@@ -136,7 +136,7 @@ export default function PublicCard({ card }: PublicCardProps) {
                                         Tap “Show answer” to reveal the solution.
                                     </p>
                                 )}
-                            </div>
+                            </div> */}
                         </>
                     ) : (
                         <p className="rounded-2xl border border-dashed border-white/30 bg-white/5 px-4 py-6 text-center text-xs text-slate-400 sm:text-sm">
