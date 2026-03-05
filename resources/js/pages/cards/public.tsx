@@ -77,7 +77,7 @@ export default function PublicCard({ card }: PublicCardProps) {
                             href={card.alt_video_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="break-all text-[#7ce2ff] underline underline-offset-4"
+                            className="max-w-full break-words text-[#7ce2ff] underline underline-offset-4"
                         >
                             {card.alt_video_url}
                         </a>
@@ -105,7 +105,7 @@ export default function PublicCard({ card }: PublicCardProps) {
 
                     {showQuestion ? (
                         <>
-                            <h1 className="text-2xl font-semibold leading-tight text-white sm:text-3xl">
+                            <h1 className="break-words text-[clamp(1.35rem,3.6vw,2.25rem)] font-semibold leading-tight text-white">
                                 {card.question}
                             </h1>
 {/* 
@@ -128,7 +128,7 @@ export default function PublicCard({ card }: PublicCardProps) {
                                     </button>
                                 </div>
                                 {showAnswer ? (
-                                    <p className="text-base leading-relaxed text-slate-100 sm:text-lg">
+                                    <p className="break-words text-[clamp(1rem,2.6vw,1.125rem)] leading-relaxed text-slate-100">
                                         {card.answer}
                                     </p>
                                 ) : (
